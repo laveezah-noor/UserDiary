@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Users xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ID="1">
+	<User>
+		<ID>1</ID>
+		<Type>admin</Type>
+		<Username>admin</Username>
+		<Name>Admin</Name>
+		<Password>admin</Password>
+		<Phone />
+		<Email />
+		<Status>active</Status>
+		<LogStatus>false</LogStatus>
+	</User>
+</Users>
