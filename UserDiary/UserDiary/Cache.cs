@@ -11,6 +11,7 @@ namespace UserDiary
         static Cache? instance;
         public List<string> UsernameList;
         public List<Diary_List> defaultDiaryList;
+        public List<Diary> Feed;
         public DefaultUserList UserList;
 
         public List<User> defaultAdminList;
@@ -40,6 +41,7 @@ namespace UserDiary
                 Xml<DefaultUserList>.Serialize(UserList);
                 User admin = new ("admin", "Admin", "admin","admin","active", "", "");
                 admin.display();
+                admin.CreateDiaryList(admin);
                 UserList.AddUser(admin);
 
             }
@@ -47,6 +49,7 @@ namespace UserDiary
             defaultAdminList = GetAdminList();
             defaultDiaryList = GetDefaultDiaryList();
             UsernameList = GetUsernameList();
+            Feed = DisplayFeed();
             
         }
 
@@ -67,6 +70,7 @@ namespace UserDiary
         // Gets the DiaryList from the UserList
         List<Diary_List> GetDefaultDiaryList()
         {
+            defaultDiaryList.Clear();
             for (int i = 0; i < UserList.UsersList.Count; i++)
             {
                 var item = UserList.UsersList[i];
@@ -101,26 +105,59 @@ namespace UserDiary
                 //Console.WriteLine($"UserId: {item.user}, UserDiariesCount: {item.diaryCount()}");
             }
         }
-        
+
+        //To Display the Diaries in the App.
+        //Can only see the count of the diaries
+        public List<Diary> DisplayFeed()
+        {
+            List<Diary> list = new();
+            Console.WriteLine(defaultDiaryList.Count);
+            //Console.WriteLine($"\nDiary List Count: {Cache.getCache().defaultDiaryList.Count} out of {Cache.getCache().UserList.UsersList.Count} \n");
+            foreach (var item in defaultDiaryList)
+            {
+                //item.DisplayDiaries();
+                foreach (var diary in item.diaries)
+                {
+                    
+                    if (diary.privacy)
+                    {
+                        list.Add(diary);
+                        Console.WriteLine(diary.Display());
+                    }
+
+                }
+            }
+            return list;
+        }
+
+
         public Dictionary<string,object> Register(string name, string username, string passcode, string email, string phone)
         {
-            if (Utility.ValidateUsername(username))
+            if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(passcode))
             {
-            User emp = new User(username, name, passcode, Types.user.ToString(), Statuses.pending.ToString(), phone, email);
-            UserList.AddUser(emp);
-                return new Dictionary<string, object>(){
-                            { "Status", 200 },
-                            { "Response", "Account Created!"} };
+
+                if (Utility.ValidateUsername(username))
+                {
+                    User emp = new User(username, name, passcode, Types.user.ToString(), Statuses.pending.ToString(), phone, email);
+                    UserList.AddUser(emp);
+                        return new Dictionary<string, object>(){
+                                    { "Status", 200 },
+                                    { "Response", "Account Created!"} };
+                }
+                else return new Dictionary<string, object>(){
+                                { "Status", 400 },
+                                { "Response", "Username exists or Null!"} };
+
             }
             else return new Dictionary<string, object>(){
-                            { "Status", 400 },
-                            { "Response", "Username exists!"} };
+                                { "Status", 400 },
+                                { "Response", "Please fill the required fields!"} };
 
         }
         // To Login
         public dynamic UserLog(string username, string password)
         {
-            if (currentUser == null)
+            if (currentUser == null || currentUser.Id ==0)
             {
                 User user = UserList.FindUser(username);
                 if (user is not null)
@@ -148,7 +185,8 @@ namespace UserDiary
             //else Console.WriteLine("Already Logged In");
             return new Dictionary<string, object>(){
                             { "Status", 400 },
-                            { "Response", "Already Logged In"} };
+                            { "Response", "Already Logged In" +
+                            $"{currentUser.display()}"} };
         }
 
         // To Logout
@@ -174,6 +212,7 @@ namespace UserDiary
         {
             Xml<DefaultUserList>.Serialize(Cache.getCache().UserList);
             UserList = Xml<DefaultUserList>.Deserialize(UserList);
+            defaultDiaryList = GetDefaultDiaryList();
 
         }
 

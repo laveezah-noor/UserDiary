@@ -40,9 +40,19 @@ namespace UserDiary
             //this.UsersList = Cache.getCache().UserList.UsersList;
         }
 
-        //public void UpdateUser() { }
+        public void UpdateUser(User user)
+        {
+            if (FindUser(user.Id) != null)
+            {
+                DisplayUsers();
+                int index = this.UsersList.FindIndex(userItem => userItem.Id == user.Id);
+                Console.WriteLine(index);
+                this.UsersList[index] = user;
+                DisplayUsers();
 
-        public bool DeleteUser(int userId)
+            }
+        }
+            public bool DeleteUser(int userId)
         {
             if (FindUser(userId) != null)
             {
@@ -80,7 +90,17 @@ namespace UserDiary
             }
             return null;
         }
-
+        //public int FindUserIndex(int userId)
+        //{
+        //    foreach (User user in this.UsersList)
+        //    {
+        //        if (user.Id == userId)
+        //        {
+        //            return 
+        //        }
+        //    }
+        //    return null;
+        //}
         public void DisplayUsers(List<User> list)
         {
             //Console.WriteLine(list.Count);
@@ -100,14 +120,39 @@ namespace UserDiary
         {
             foreach (User user in this.UsersList)
             {
-                //Console.WriteLine($"ID: {user.Id}\n" +
-                //    $"Name: {user.Name}\n" +
-                //    $"UserName: {user.UserName}\n" +
-                //    $"Type: {user.Type}\n" +
-                //    $"Status: {user.Status}\n" +
-                //    $"Phone: {user.phone}\n" +
-                //    $"Email: {user.email}\n");
+                Console.WriteLine($"ID: {user.Id}\n" +
+                    $"Name: {user.Name}\n" +
+                    $"UserName: {user.UserName}\n" +
+                    $"Type: {user.Type}\n" +
+                    $"Status: {user.Status}\n" +
+                    $"Phone: {user.phone}\n" +
+                    $"Email: {user.email}\n");
             }
+        }
+        public override string ToString()
+        {
+            string us = "";
+            foreach (User user in this.UsersList)
+            { 
+                us += $"ID: {user.Id}\n" +
+                    $"name: {user.Name}\n" +
+                    $"username: {user.UserName}\n" +
+                    $"type: {user.Type}\n" +
+                    $"status: {user.Status}\n" +
+                    $"phone: {user.phone}\n" +
+                    $"email: {user.email}\n";
+                if (user.userDiaries is not null)
+                {
+                    user.userDiaries.DisplayDiaries();
+                    foreach (Diary diary in user.userDiaries.diaries)
+                    {
+                    us += $"name: {diary.Name}\n" +
+                    $"username: {diary.Content}\n";
+
+                    }
+                }
+            }
+            return us;
         }
     }
 }

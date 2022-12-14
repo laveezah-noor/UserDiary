@@ -5,7 +5,7 @@ namespace UserDiary
     public class Diary_List
     {
         [XmlElement("Diary")]
-        public List<Diary> diaries = new ();
+        public List<Diary> diaries = new();
 
         [XmlAttribute("UserID")]
         public int user;
@@ -22,8 +22,20 @@ namespace UserDiary
             Diary diary = new(diaryId(),name);
             diary.Create(content);
             this.diaries.Add(diary);
+            //DisplayDiaries();
             //Console.WriteLine("Diary Created");
         }
+
+        // To add a new Diary in the list
+        public void AddDiary(string name, string content, bool privacy)
+        {
+            Diary diary = new(diaryId(), name, privacy, user);
+            diary.Create(content);
+            this.diaries.Add(diary);
+            //DisplayDiaries();
+            //Console.WriteLine("Diary Created");
+        }
+
         int diaryId()
         {
             if (DiaryCount() == 0 || DiaryCount() == this.diaries.Last().Id)
@@ -35,7 +47,7 @@ namespace UserDiary
         }
 
         // To update the Diary in the list
-        public bool UpdateDiary(int diaryId, string Name, string Content)
+        public bool UpdateDiary(int diaryId, string Name, string Content, bool privacy)
         {
             Diary diary = FindDiary(diaryId);
             if (diary != null)
@@ -56,6 +68,7 @@ namespace UserDiary
                         diary.UpdateContent(Content);
                     }
                 }
+                diary.UpdatePrivacy(privacy);
                 return true;
             }
             else
@@ -103,9 +116,9 @@ namespace UserDiary
             if (this.diaries.Count != 0) {
                 for (int i = 0; i < this.diaries.Count; i++)
                 {
-                    //Console.WriteLine(this.diaries[i].display(user));
+                    Console.WriteLine(this.diaries[i].Display(user));
                 }
-            
+
             } 
             //else Console.WriteLine("No Diaries Created Yet!");
         }
@@ -113,7 +126,18 @@ namespace UserDiary
         // To display diary count
         public int DiaryCount()
         {
-            return this.diaries.Count;
+            //User temp = Cache.getCache().UserList.FindUser(user);
+            //if (this.diaries.Count >= temp.userDiaries.DiaryCount() && this.diaries.Count >= temp.feed.DiaryCount())
+                return this.diaries.Count;
+            //else if (this.diaries.Count < temp.feed.DiaryCount())
+            //{
+            //    return temp.feed.DiaryCount();
+            //}
+            //else if (this.diaries.Count < temp.userDiaries.DiaryCount())
+            //{
+            //    return temp.feed.DiaryCount();
+            //}
+            //return 0;
         }
     }
 }

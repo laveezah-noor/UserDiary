@@ -10,9 +10,11 @@ namespace UserDiary
         public string Content { get; set; }
         public DateTime CreatedAt;
         public DateTime LastUpdate { get; set; }
-        
+        public bool privacy { get; set; }
+        public int userId;
+
         public Diary() { }
-        
+
         public Diary(int count, string Name)
         {
             this.Id = count;
@@ -20,6 +22,18 @@ namespace UserDiary
             this.Content = "";
             this.CreatedAt = DateTime.Now;
             this.LastUpdate = DateTime.Now;
+            this.privacy = false;
+        }
+
+        public Diary(int count, string Name, bool privacy, int userId)
+        {
+            this.Id = count;
+            this.Name = Name;
+            this.Content = "";
+            this.CreatedAt = DateTime.Now;
+            this.LastUpdate = DateTime.Now;
+            this.privacy = privacy;
+            this.userId = userId;
         }
 
         // To create a new diary
@@ -50,7 +64,12 @@ namespace UserDiary
 
         public string Display()
         {
-            return $"ID: {this.Id} ,Title: {this.Name}, Content: {this.Content}";
+            return $"ID: {this.Id} ,Title: {this.Name}, Content: {this.Content}, UserID: {userId}";
+        }
+
+        internal void UpdatePrivacy(bool privacy)
+        {
+            this.privacy = privacy;
         }
     }
 }

@@ -3,13 +3,13 @@
 namespace UserDiary
 {
 
-    enum Types
+    public enum Types
     {
         admin,
         user
     }
 
-    enum Statuses
+    public enum Statuses
     {
         active,
         pending
@@ -33,6 +33,8 @@ namespace UserDiary
         public string Type;
         public string Status { get; set; }
         public bool LogStatus { get; set; }
+        //[XmlElement("PublicDiaries")]
+        //public Diary_List feed;
         [XmlElement("Diaries")]
         public Diary_List userDiaries;
 
@@ -80,35 +82,40 @@ namespace UserDiary
 
         public void UpdateUser(string Name, string Password, string Phone, string Email)
         {
-            if (Name != "" || Password != "" || Phone != "" || Email != "" && this.LogStatus)
-            {
-                for (int i = 0; i < 4; i++)
+            if (Name != "" || Password != "" || Phone != "" || Email != "")
                 {
-                    if (Name != "")
+                    for (int i = 0; i < 4; i++)
                     {
-                        this.Name = Name;
-                        Name = "";
-                        //Console.WriteLine(Name);
+                    if (Name != "" && this.Name != Name)
+                        {
+                            this.Name = Name;
+                            Name = "";
+                            if (Password == "" && Phone == "" && Email == "") break;
+                            //Console.WriteLine(Name);
+                        }
+                        else if (Password != "" && this.Password != Password)
+                        {
+                            this.Password = Password;
+                            Password = "";
+                            if (Phone == "" && Email == "") break;
+                            //Console.WriteLine(Password);  
+                        }
+                        else if (Phone != "" && this.phone != Phone)
+                        {
+                            this.phone = Phone;
+                            Phone = "";
+                            if (Email == "") break;
+                            //Console.WriteLine(Phone);
+                        }
+                        else if (Email != "" && this.email != Email)
+                        {
+                            this.email = Email;
+                            Email = "";
+                            //Console.WriteLine(Email);
+                        }
                     }
-                    else if (Password != "")
-                    {
-                        this.Password = Password;
-                        Password = "";
-                        //Console.WriteLine(Password);
-                    }
-                    else if (Phone != "")
-                    {
-                        this.phone = Phone;
-                        Phone = "";
-                        //Console.WriteLine(Phone);
-                    }
-                    else if (Email != "")
-                    {
-                        this.email = Email;
-                        Email = "";
-                        //Console.WriteLine(Email);
-                    }
-                }
+                Cache.getCache().UserList.UpdateUser(this);
+
                 Cache.getCache().UpdateUserList();
                 //Console.Clear();
                 //Console.WriteLine("\nProfile Updated!\n");
@@ -126,9 +133,9 @@ namespace UserDiary
         }
         
 
-        public void display()
+        public string display()
         {
-            Console.WriteLine("\n" +
+            string result = ("\n" +
                         $"ID: {this.Id}\n" +
                         $"Username: {this.UserName}\n" +
                         $"Name: {this.Name}\n" +
@@ -138,9 +145,12 @@ namespace UserDiary
                         $"Phone: {this.phone}\n" +
                         $"Email: {this.email}\n" +
                         $"Authorize: {this.userDiaries is not null}\n");
+            Console.WriteLine(result);
+            return result;
 
         }
-        //To Create a New Diary
+
+        //To Create a New Private Diary
         public Dictionary<string,object> CreateDiary(string name, string content)
         {
             if (this.LogStatus)
@@ -148,6 +158,8 @@ namespace UserDiary
                 if (this.userDiaries is not null && this.Status == Statuses.active.ToString())
                 {
                     this.userDiaries.AddDiary(name, content);
+                    //this.userDiaries.DisplayDiaries();
+                    Cache.getCache().UserList.UpdateUser(this);
                     Cache.getCache().UpdateDiaryList();
                     return new Dictionary<string, object>(){
                             { "Status", 200 },
@@ -159,7 +171,36 @@ namespace UserDiary
             }
                 return new Dictionary<string, object>(){
                             { "Status", 400 },
-                            { "Response", "No diary space for {this.Name} contact your admin"}
+                            { "Response", $"No diary space for {this.Name} contact your admin"}
+                    };
+        }
+
+        //To Create a New Public Diary
+        public Dictionary<string, object> CreateDiary(string name, string content, bool privacy)
+        {
+            if (this.LogStatus)
+            {
+                if (this.userDiaries is not null 
+                    //&& this.feed is not null 
+                    && this.Status == Statuses.active.ToString())
+                {
+                    //if (privacy) this.feed.AddDiary(name, content);
+                    //else 
+                        this.userDiaries.AddDiary(name, content, privacy);
+                    //this.userDiaries.DisplayDiaries();
+                    Cache.getCache().UserList.UpdateUser(this);
+                    Cache.getCache().UpdateDiaryList();
+                    return new Dictionary<string, object>(){
+                            { "Status", 200 },
+                            { "Response", "Diary Created!"}
+                    };
+                }
+                //Console.WriteLine($"\nNo diary space for {this.Name} contact your admin\n");
+
+            }
+            return new Dictionary<string, object>(){
+                            { "Status", 400 },
+                            { "Response", $"No diary space for {this.Name} contact your admin"}
                     };
         }
 
@@ -170,6 +211,7 @@ namespace UserDiary
             {
                 if (this.userDiaries.DeleteDiary(diaryID))
                 {
+                    Cache.getCache().UserList.UpdateUser(this);
                     Cache.getCache().UpdateDiaryList();
                     //Console.Clear();
                     //Console.WriteLine("\nDiary Deleted!");
@@ -177,7 +219,18 @@ namespace UserDiary
                             { "Status", 200 },
                             { "Response", "Diary Deleted!"}
                     };
-                }
+                } 
+                //else if (this.feed.DeleteDiary(diaryID))
+                //{
+                //    Cache.getCache().UserList.UpdateUser(this);
+                //    Cache.getCache().UpdateDiaryList();
+                //    //Console.Clear();
+                //    //Console.WriteLine("\nDiary Deleted!");
+                //    return new Dictionary<string, object>(){
+                //            { "Status", 200 },
+                //            { "Response", "Diary Deleted!"}
+                //    };
+                //}
             }
             return new Dictionary<string, object>(){
                             { "Status", 400 },
@@ -186,22 +239,36 @@ namespace UserDiary
         }
 
         //To update a diary
-        public Dictionary<string, object> UpdateDiary(int diaryId, string Name, string Content)
+        public Dictionary<string, object> UpdateDiary(int diaryId, string Name, string Content, bool privacy)
         {
-            if (!string.IsNullOrEmpty(Name) || !string.IsNullOrEmpty(Content))
-            {
-                if (this.userDiaries.UpdateDiary(diaryId, Name, Content))
-                {
-                    Cache.getCache().UpdateDiaryList();
-                    Diary diary = this.userDiaries.FindDiary(diaryId);
-                    //Console.Clear();
-                    //Console.WriteLine(diary.display());
-                    //Console.WriteLine("Diary Updated!");
-                    return new Dictionary<string, object>(){
-                            { "Status", 200 },
-                            { "Response", "Diary Updated!"}
-                    };
-                }
+            //if (!string.IsNullOrEmpty(Name) || !string.IsNullOrEmpty(Content))
+            //{
+                //if (privacy)
+                //{
+                //    if (userDiaries.FindDiary(diaryId) != null)
+                //    {
+                //    this.userDiaries.DeleteDiary(diaryId);
+                //    this.feed.AddDiary(Name, Content, privacy);
+                //    }
+                //    else if (feed.FindDiary(diaryId) != null)
+                //    {
+                //        this.feed.UpdateDiary(diaryId, Name, Content, privacy);
+                //    }
+                //}
+                //else if (!privacy)
+                //{
+                //    if (feed.FindDiary(diaryId) != null)
+                //    {
+                //        this.feed.DeleteDiary(diaryId);
+                //        this.userDiaries.AddDiary(Name, Content, privacy);
+                //    }
+                //    else if (userDiaries.FindDiary(diaryId) != null)
+                //    {
+                //        this.userDiaries.UpdateDiary(diaryId, Name, Content, privacy);
+                //    }
+                if (userDiaries.FindDiary(diaryId) != null) {
+                this.userDiaries.UpdateDiary(diaryId, Name, Content, privacy);
+            }
                 else
                 {
                     //Console.Clear();
@@ -212,14 +279,20 @@ namespace UserDiary
                     };
                 }
 
-            }
-            else {
-                //Console.Clear(); Console.WriteLine("\nNothing to Update!");
-                return new Dictionary<string, object>(){
-                            { "Status", 400 },
-                            { "Response", "Nothing to Update!"}
-                    };
-            }
+                Cache.getCache().UserList.UpdateUser(this);
+                Cache.getCache().UpdateDiaryList();
+            return new Dictionary<string, object>(){
+                            { "Status", 200 },
+                            { "Response", "Diary Updated!"} };
+
+            //}
+            //else {
+            //    //Console.Clear(); Console.WriteLine("\nNothing to Update!");
+            //    return new Dictionary<string, object>(){
+            //                { "Status", 400 },
+            //                { "Response", "Nothing to Update!"}
+            //        };
+            //}
         }
 
         //To find a diary
@@ -391,17 +464,24 @@ namespace UserDiary
 
         //To Display the Diaries in the App.
         //Can only see the count of the diaries
-        public void DisplayDiaryLists()
+        public List<Dictionary<string, object>> DisplayDiaryLists()
         {
+            List<Dictionary<string, object>> list = new List<Dictionary<string, object>>();
             if (this.Type == Types.admin.ToString())
             {
                 //Console.WriteLine($"\nDiary List Count: {Cache.getCache().defaultDiaryList.Count} out of {Cache.getCache().UserList.UsersList.Count} \n");
                 foreach (var item in Cache.getCache().defaultDiaryList)
                 {
-                    //Console.WriteLine($"UserId: {item.user}, UserDiariesCount: {item.diaryCount()}");
+                    User user = FindUser(item.user);
+                    list.Add(new Dictionary<string, object>(){
+                            { "UserId", item.user },
+                            { "User", user },
+                            { "Count", item.DiaryCount()}
+                    });
                 }
 
             }
+            return list;
         }
 
         //To  Create the users from the admin portal
@@ -445,7 +525,7 @@ namespace UserDiary
         //    if (this.Type == Types.admin.ToString())
         //    {
         //        User newUser = new User(UserName, Name, Password, Types.user.ToString(), Statuses.active.ToString(), "", "");
-                
+
         //        //Cache.UserList.addUser(newUser);
         //        CreateDiaryList(newUser.userDiaries);
         //       Cache.getCache().UpdateUserList();
@@ -471,7 +551,38 @@ namespace UserDiary
         //}
 
         //To Delete users from the admin portal
-        public void DeleteUser(int userId)
+        public Dictionary<string, object> DeleteUser(User user)
+        {
+            if (this.Type == Types.admin.ToString())
+            {
+                if (this.Id != user.Id && user.Id != 1)
+                {
+                    if (Cache.getCache().UserList.DeleteUser(user.Id))
+                    {
+                        return new Dictionary<string, object>()
+                        {
+                            {"Status", 200 },
+                            {"Response", "Deleted Successfully!" }
+                        };
+                    }
+                }
+                else
+                {
+                    return new Dictionary<string, object>()
+                        {
+                            {"Status", 400 },
+                            {"Response", "You cannot remove yourself or main admin!" }
+                        };
+                }
+            }
+            return new Dictionary<string, object>()
+            {
+                {"Status", 400 },
+                {"Response", "Not Admin!" }
+            };
+
+        }
+            public void DeleteUser(int userId)
         {
             if (this.Type == Types.admin.ToString())
             {

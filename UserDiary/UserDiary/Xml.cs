@@ -17,6 +17,8 @@ namespace UserDiary
                 XmlSerializer serializer = new XmlSerializer(Item.GetType());
                 using (TextWriter writer = new StreamWriter(@$"{type}.xml"))
                 {
+                    //Console.WriteLine("Here");
+                    //Console.WriteLine(Item.ToString());
                     serializer.Serialize(writer, Item);
                     writer.Close();
                 }
@@ -37,6 +39,27 @@ namespace UserDiary
             {
                 XmlSerializer deserializer = new XmlSerializer(Item.GetType());
                 using (TextReader reader = new StreamReader(@$"{Item.GetType()}.xml"))
+                {
+                    object obj = deserializer.Deserialize(reader);
+                    XmlData = (T)obj;
+                    reader.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                string stException = string.Format("Exception: {0} \n Message: {1}", ex.StackTrace, ex.Message);
+                //Console.WriteLine(stException);
+            }
+
+            return XmlData;
+        }
+        public static T Deserialize(T Item, string path)
+        {
+            T XmlData = default(T);
+            try
+            {
+                XmlSerializer deserializer = new XmlSerializer(Item.GetType());
+                using (TextReader reader = new StreamReader(@$"{path}.xml"))
                 {
                     object obj = deserializer.Deserialize(reader);
                     XmlData = (T)obj;
